@@ -18,10 +18,19 @@
 <html>
 
 <head>
-<title>Guacamole (EXAMPLE)</title>
+<title>Guacamole</title>
 </head>
 
 <body>
+
+	<select id="protocol">
+		<option value="vnc">VNC</option>
+		<option value="ssh">SSH</option>
+	</select>
+
+	<input id="vm" type="text">
+
+	<input type="button" value="Connect" onclick="connectTunnel();" />
 
 	<!-- Display -->
 	<div id="display"></div>
@@ -31,41 +40,47 @@
 
 	<!-- Init -->
 	<script type="text/javascript">
-		/* <![CDATA[ */
-		// Get display div from document
-		var display = document.getElementById("display");
-		// Instantiate client, using an HTTP tunnel for communications.
-		var guac = new Guacamole.Client(new Guacamole.HTTPTunnel("tunnel", false, {
-			"port":"22", "protocol":"ssh"
-		}));
-		// Add client to display div
-		display.appendChild(guac.getDisplay().getElement());
+		function connectTunnel() {
+			/* <![CDATA[ */
+			// Get display div from document
+			var display = document.getElementById("display");
+			// Instantiate client, using an HTTP tunnel for communications.
+			var guac = new Guacamole.Client(new Guacamole.HTTPTunnel("tunnel",
+					false, {
+						"vm" : document.getElementById("vm").value,
+						"protocol" : document.getElementById("protocol").value
+					}));
 
-		// Error handler
-		guac.onerror = function(error) {
-			alert(error);
+			// Add client to display div
+			display.appendChild(guac.getDisplay().getElement());
+
+			// Error handler
+			guac.onerror = function(error) {
+				alert(error);
+			};
+
+			// Connect
+			guac.connect();
+			// Disconnect on close
+			window.onunload = function() {
+				guac.disconnect();
+			}
+			// Mouse
+			var mouse = new Guacamole.Mouse(guac.getDisplay().getElement());
+			mouse.onmousedown = mouse.onmouseup = mouse.onmousemove = function(
+					mouseState) {
+				guac.sendMouseState(mouseState);
+			};
+			// Keyboard
+			var keyboard = new Guacamole.Keyboard(document);
+			keyboard.onkeydown = function(keysym) {
+				guac.sendKeyEvent(1, keysym);
+			};
+			keyboard.onkeyup = function(keysym) {
+				guac.sendKeyEvent(0, keysym);
+			};
+			/* ]]> */
 		};
-		// Connect
-		guac.connect();
-		// Disconnect on close
-		window.onunload = function() {
-			guac.disconnect();
-		}
-		// Mouse
-		var mouse = new Guacamole.Mouse(guac.getDisplay().getElement());
-		mouse.onmousedown = mouse.onmouseup = mouse.onmousemove = function(
-				mouseState) {
-			guac.sendMouseState(mouseState);
-		};
-		// Keyboard
-		var keyboard = new Guacamole.Keyboard(document);
-		keyboard.onkeydown = function(keysym) {
-			guac.sendKeyEvent(1, keysym);
-		};
-		keyboard.onkeyup = function(keysym) {
-			guac.sendKeyEvent(0, keysym);
-		};
-		/* ]]> */
 	</script>
 
 </body>
